@@ -1,0 +1,1 @@
+{"context": 128, "horizon": 12, "step": 12, "interval": 0.98, "target": "packet_count", "starts": [128, 140, 152, 164, 176, 188, 200], "n": 216, "mode": "flow", "tag": "flow_1min", "data": "new_data_aggregated_60s.parquet"}

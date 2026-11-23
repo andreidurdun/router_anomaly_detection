@@ -1,0 +1,13 @@
+window,datetime,truth,pred,lower,upper,is_anom_m0,score_m0,is_anom_m1,score_m1,is_anom_m2,score_m2,is_anom_m3,score_m3,is_anom_m4,score_m4,is_anom_m5,score_m5,votes,is_anom_consensus
+0,2026-10-02 03:40:00,29.0,29.0,16.5,29.875,False,0.0,False,0.0,False,0.0,False,0.0,False,0.0,False,0.0,0,False
+0,2026-10-02 03:45:00,30.0,12416.0,7104.0,12800.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+0,2026-10-02 03:50:00,29.0,428.0,428.0,428.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+0,2026-10-02 03:55:00,30.0,-2.0227162167429924e-09,-1.0756775736808777e-07,1.4621764421463013e-07,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+0,2026-10-02 04:00:00,29.0,-2.0227162167429924e-09,-1.0756775736808777e-07,1.4621764421463013e-07,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+0,2026-10-02 04:05:00,30.0,10.1875,10.125,10.1875,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+1,2026-10-02 04:10:00,29.0,29.0,28.5,29.5,False,0.0,False,0.0,False,0.0,False,0.0,False,0.0,False,0.0,0,False
+1,2026-10-02 04:15:00,30.0,12416.0,12224.0,12608.0,False,1.0,False,1.0,False,1.0,True,1.0,True,1.0,False,1.0,2,True
+1,2026-10-02 04:20:00,29.0,428.0,428.0,428.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+1,2026-10-02 04:25:00,30.0,1.5279510989785194e-10,-1.0756775736808777e-07,1.6111880540847778e-07,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+1,2026-10-02 04:30:00,29.0,1.5279510989785194e-10,-1.0756775736808777e-07,1.6111880540847778e-07,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+1,2026-10-02 04:35:00,30.0,10.1875,10.1875,10.1875,True,1.0,False,1.0,True,1.0,False,1.0,False,1.0,True,1.0,3,True

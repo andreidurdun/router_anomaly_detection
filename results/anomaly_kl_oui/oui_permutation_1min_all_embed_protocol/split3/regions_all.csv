@@ -1,0 +1,3 @@
+oui,mac_type,rank,region_id,size,score,share_of_divergence,p_value,n_marked_method5,frac_marked_method5,routers,n_routers
+401A58,known,1,0,4,0.08141811758609618,0.5612191156389801,0.047619047619047616,0,0.0,66a6571d7f32:4,1
+C0F535,known,1,0,4,0.1001132599736404,-2.0043567159415625,0.047619047619047616,0,0.0,8139dd558af0:4,1

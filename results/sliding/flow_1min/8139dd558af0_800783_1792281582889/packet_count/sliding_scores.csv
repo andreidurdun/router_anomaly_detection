@@ -1,0 +1,7 @@
+window,datetime,truth,pred,lower,upper,is_anom_m0,score_m0,is_anom_m1,score_m1,is_anom_m2,score_m2,is_anom_m3,score_m3,is_anom_m4,score_m4,is_anom_m5,score_m5,votes,is_anom_consensus
+0,2026-10-18 03:55:00,30.0,30.0,6.625,30.125,False,0.0,False,0.0,False,0.0,False,0.0,False,0.0,False,0.0,0,False
+0,2026-10-18 04:00:00,29.0,1.2223608791828156e-09,-1.1734664440155029e-07,3.91155481338501e-07,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+0,2026-10-18 04:05:00,30.0,1.2223608791828156e-09,-1.1734664440155029e-07,3.91155481338501e-07,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+0,2026-10-18 04:10:00,30.0,9472.0,2096.0,9536.0,False,1.0,True,1.0,False,1.0,True,1.0,True,1.0,False,1.0,3,True
+0,2026-10-18 04:15:00,30.0,10.0625,9.375,10.0625,False,0.7120533171238154,False,0.7120533171238154,False,0.7120533171238154,False,0.7120533171238154,False,0.7120533171238154,False,0.7120533171238154,0,False
+0,2026-10-18 04:20:00,30.0,1.2223608791828156e-09,-1.1734664440155029e-07,3.91155481338501e-07,True,1.0,False,1.0,True,1.0,False,1.0,False,1.0,True,1.0,3,True

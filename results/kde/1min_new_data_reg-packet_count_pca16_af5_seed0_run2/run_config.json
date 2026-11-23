@@ -1,0 +1,16 @@
+{
+  "method": "KDE",
+  "n_flows": 5396,
+  "bandwidth": 6.406464806147826,
+  "anomaly_frac": 0.05,
+  "n_anomalies": 6,
+  "n_regions": 1,
+  "reg": "packet_count",
+  "pca_dim": 16,
+  "channels": "packet_count,fwd_mean_iat,fwd_mean_packet_size,bwd_mean_iat,bwd_mean_packet_size",
+  "bin": "1min",
+  "min_bins": 60,
+  "min_packets": 1,
+  "leave_one_out": false,
+  "seed": 0
+}

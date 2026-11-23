@@ -1,0 +1,5 @@
+case_id,region_rank,region_id,n_flows,service,devices,routers,first_seen,last_seen,verdict (normal | unusual-benign | suspicious | cannot-tell),reason,missing_information,reviewer,date
+case_01_R19,1,19,62,SSDP,3,2,2026-10-01 19:50:00,2026-10-19 10:00:00,,,,,
+case_02_R11,2,11,22,HTTPS/QUIC,2,2,2026-10-02 03:00:00,2026-10-15 02:20:00,,,,,
+case_03_R14,3,14,21,HTTPS/QUIC,1,1,2026-10-02 06:30:00,2026-10-18 11:15:00,,,,,
+case_04_R20,4,20,35,DNS,3,3,2026-10-01 19:00:00,2026-10-19 07:15:00,,,,,

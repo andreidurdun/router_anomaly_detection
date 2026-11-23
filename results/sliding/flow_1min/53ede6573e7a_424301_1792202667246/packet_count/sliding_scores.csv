@@ -1,0 +1,25 @@
+window,datetime,truth,pred,lower,upper,is_anom_m0,score_m0,is_anom_m1,score_m1,is_anom_m2,score_m2,is_anom_m3,score_m3,is_anom_m4,score_m4,is_anom_m5,score_m5,votes,is_anom_consensus
+0,2026-10-17 06:00:00,8.0,6.03125,5.84375,8.4375,False,0.393749212501575,False,0.393749212501575,False,0.393749212501575,False,0.393749212501575,False,0.393749212501575,False,0.393749212501575,0,False
+0,2026-10-17 06:05:00,6.0,158.0,155.0,336.0,False,1.0,False,1.0,False,1.0,True,1.0,True,1.0,False,1.0,2,True
+0,2026-10-17 06:10:00,6.0,52.0,51.75,212.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+0,2026-10-17 06:15:00,8.0,158.0,151.0,352.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+0,2026-10-17 06:20:00,6.0,90.5,-23.5,91.5,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+0,2026-10-17 06:25:00,6.0,90.5,-23.5,91.5,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+1,2026-10-17 06:30:00,6.0,8.1875,5.8125,13.5,False,0.43749912500175003,False,0.43749912500175003,False,0.43749912500175003,False,0.43749912500175003,False,0.43749912500175003,False,0.43749912500175003,0,False
+1,2026-10-17 06:35:00,6.0,214.0,152.0,672.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+1,2026-10-17 06:40:00,8.0,52.0,51.75,220.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+1,2026-10-17 06:45:00,6.0,210.0,151.0,364.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+1,2026-10-17 06:50:00,6.0,91.5,76.0,97.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+1,2026-10-17 06:55:00,8.0,91.5,76.0,97.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+2,2026-10-17 07:00:00,6.0,6.0,5.875,8.625,False,0.0,False,0.0,False,0.0,False,0.0,False,0.0,False,0.0,0,False
+2,2026-10-17 07:05:00,8.0,158.0,153.0,320.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+2,2026-10-17 07:10:00,6.0,52.0,51.75,177.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+2,2026-10-17 07:15:00,6.0,156.0,153.0,227.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+2,2026-10-17 07:20:00,6.0,91.5,58.0,96.5,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+2,2026-10-17 07:25:00,8.0,91.5,58.5,96.5,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+3,2026-10-17 07:30:00,6.0,6.0,5.875,9.0625,False,0.0,False,0.0,False,0.0,False,0.0,False,0.0,False,0.0,0,False
+3,2026-10-17 07:35:00,6.0,158.0,151.0,346.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+3,2026-10-17 07:40:00,8.0,52.0,51.75,110.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+3,2026-10-17 07:45:00,6.0,156.0,153.0,242.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+3,2026-10-17 07:50:00,6.0,91.5,77.5,96.5,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+3,2026-10-17 07:55:00,8.0,91.5,77.5,96.5,True,1.0,False,1.0,True,1.0,False,1.0,False,1.0,True,1.0,3,True

@@ -1,0 +1,7 @@
+window,datetime,truth,pred,lower,upper,is_anom_m0,score_m0,is_anom_m1,score_m1,is_anom_m2,score_m2,is_anom_m3,score_m3,is_anom_m4,score_m4,is_anom_m5,score_m5,votes,is_anom_consensus
+0,2026-10-09 20:45:00,6.0,6.0625,5.625,9.3125,False,0.015624960937597658,False,0.015624960937597658,False,0.015624960937597658,False,0.015624960937597658,False,0.015624960937597658,False,0.015624960937597658,0,False
+0,2026-10-09 20:50:00,10.0,158.0,145.0,245.0,False,1.0,False,1.0,False,1.0,True,1.0,True,1.0,False,1.0,2,True
+0,2026-10-09 20:55:00,6.0,52.0,52.0,63.25,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+0,2026-10-09 21:00:00,6.0,161.0,140.0,636.0,True,1.0,False,1.0,False,1.0,False,1.0,False,1.0,True,1.0,2,True
+0,2026-10-09 21:05:00,8.0,90.0,-57.5,90.5,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+0,2026-10-09 21:10:00,6.0,90.0,-55.25,90.5,False,1.0,False,1.0,True,1.0,False,1.0,False,1.0,False,1.0,1,False

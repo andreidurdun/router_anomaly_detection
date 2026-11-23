@@ -1,0 +1,35 @@
+PROFILES OF THE 2 SIGNIFICANT REGIONS (all values, sorted by frequency)
+verdict: COHERENT = >=60% concentration on one service or one source/destination
+
+==========================================================================================
+REGION #1 (id 1)   flows=56   p=0.048   share of divergence=41.2%   silhouette=0.31
+  verdict: mixed / possibly noise   (port concentration 0.43, ip concentration 0.37)
+  vs all flows: packets 2356 vs 310 (x7.6),  span 70 vs 13 bins (x5.3)
+  seen 2026-10-01 13:05:00 -> 2026-10-19 10:45:00;  filter-marked 61%;  IoT 100%;  ECH 0%
+  synchrony 0.01;  peak co-activity 9% at 2026-10-02 00:55:00
+  most different from reference: fwd_mean_packet_size_mean_active (d=-2.06); fwd_mean_packet_size_max (d=-2.05); log_n_packets (d=+1.82)
+  services:      SSDP: 29 (52%); DNS: 20 (36%); hi:2350: 2 (4%); HTTPS/QUIC: 1 (2%); hi:10102: 1 (2%); HTTP: 1 (2%); hi:2098: 1 (2%); hi:30100: 1 (2%)
+  protocols:     udp: 51 (91%); tcp: 5 (9%)
+  destinations:  udp/1900: 29 (52%); udp/53: 20 (36%); tcp/2350: 2 (4%); udp/443: 1 (2%); udp/10102: 1 (2%); tcp/80: 1 (2%); tcp/2098: 1 (2%); tcp/30100: 1 (2%)
+  sources:       14:c1:9f: 28 (50%); c0:47:0e: 14 (25%); 68:3a:48: 5 (9%); 3c:84:6a: 1 (2%); 00:11:32: 1 (2%); b8:3e:59: 1 (2%); 48:e7:29: 1 (2%); 10:59:32: 1 (2%); 44:ef:bf: 1 (2%); 84:f7:58: 1 (2%); 00:33:7a: 1 (2%); 00:13:30: 1 (2%)
+  routers:       22101113e3ce: 29 (52%); 01f4384397ff: 14 (25%); c02d5ad0b320: 6 (11%); 5261e7581d5c: 1 (2%); cb22e9ce8560: 1 (2%); d62e8cdf9a60: 1 (2%); 53ede6573e7a: 1 (2%); 8139dd558af0: 1 (2%); b5f2651e2669: 1 (2%); e00ab1501d16: 1 (2%)
+  OUI:           14:c1:9f: 28 (50%); c0:47:0e: 14 (25%); 68:3a:48: 5 (9%); 3c:84:6a: 1 (2%); 00:11:32: 1 (2%); b8:3e:59: 1 (2%); 48:e7:29: 1 (2%); 10:59:32: 1 (2%); 44:ef:bf: 1 (2%); 84:f7:58: 1 (2%); 00:33:7a: 1 (2%); 00:13:30: 1 (2%)
+  direction:     in: 30 (54%); local: 20 (36%); out: 6 (11%)
+  temporal:      continuous: 56 (100%)
+
+==========================================================================================
+REGION #2 (id 4)   flows=18   p=0.048   share of divergence=14.7%   silhouette=0.44
+  verdict: COHERENT (dominant service)   (port concentration 1.00, ip concentration 0.69)
+  vs all flows: packets 37 vs 310 (x0.1),  span 88 vs 13 bins (x6.8)
+  seen 2026-10-06 01:35:00 -> 2026-10-19 10:20:00;  filter-marked 44%;  IoT 100%;  ECH 0%
+  synchrony 0.11;  peak co-activity 33% at 2026-10-17 14:25:00
+  most different from reference: active_frac (d=-13.18); n_bursts (d=+12.45); bwd_mean_packet_size_max (d=+3.34)
+  services:      HTTPS/QUIC: 18 (100%)
+  protocols:     tcp: 18 (100%)
+  destinations:  tcp/443: 18 (100%)
+  sources:       ac:50:de: 17 (94%); 0c:ca:fb: 1 (6%)
+  routers:       9b4604d167ae: 17 (94%); 0f0e455920f5: 1 (6%)
+  OUI:           ac:50:de: 17 (94%); 0c:ca:fb: 1 (6%)
+  direction:     out: 18 (100%)
+  temporal:      sporadic: 18 (100%)
+

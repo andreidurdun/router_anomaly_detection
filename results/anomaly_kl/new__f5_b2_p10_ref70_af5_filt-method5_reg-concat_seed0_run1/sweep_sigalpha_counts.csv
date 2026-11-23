@@ -1,0 +1,7 @@
+sig_alpha,n_significant_regions,n_anomalous_flows
+0.05,4,140
+0.1,4,140
+0.15,5,161
+0.2,5,161
+0.25,5,161
+0.3,10,224

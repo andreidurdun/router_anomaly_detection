@@ -1,0 +1,15 @@
+tag: reg=concat
+features: ./data/parquet/new_data_aggregated_meta.parquet
+channels: ['packet_count', 'fwd_mean_iat', 'fwd_mean_packet_size', 'bwd_mean_iat', 'bwd_mean_packet_size']
+kept flows: 5382; split B=3767 A=1615; anomaly-frac 0.05; final A=1772 (marked 157) B=3610
+reg=concat pca-dim 64 perms 20 alpha 0.01 smooth-k 5
+survivors 120, regions 5 (2 significant p<=0.05), D_KL=0.185065
+VALIDATION AUROC=0.8870 precision=0.5676 recall=0.2675 spearman=0.1029
+
+TOP 15 REGIONS:
+ rank  region_id  size    score  share_of_divergence  p_value  silhouette  frac_marked_method5
+    1          1    56 0.069331             0.412457 0.047619    0.309984             0.607143
+    2          4    18 0.025872             0.147390 0.047619    0.444599             0.444444
+    3          3    10 0.013876             0.072336 0.190476    0.712924             0.500000
+    4          0    11 0.011569             0.069629 0.333333    0.493170             0.000000
+    5          2     6 0.006973             0.037679 0.714286    0.727701             0.333333

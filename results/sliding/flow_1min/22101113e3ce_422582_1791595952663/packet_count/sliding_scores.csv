@@ -1,0 +1,13 @@
+window,datetime,truth,pred,lower,upper,is_anom_m0,score_m0,is_anom_m1,score_m1,is_anom_m2,score_m2,is_anom_m3,score_m3,is_anom_m4,score_m4,is_anom_m5,score_m5,votes,is_anom_consensus
+0,2026-10-10 03:40:00,6.0,6.0,5.71875,6.03125,False,0.0,False,0.0,False,0.0,False,0.0,False,0.0,False,0.0,0,False
+0,2026-10-10 03:41:00,5.0,428.0,428.0,428.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+0,2026-10-10 03:42:00,6.0,2576.0,2448.0,2592.0,False,1.0,True,1.0,False,1.0,True,1.0,True,1.0,False,1.0,3,True
+0,2026-10-10 03:43:00,6.0,3.055902197957039e-10,-1.2200325727462769e-07,1.4621764421463013e-07,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+0,2026-10-10 03:44:00,6.0,3.055902197957039e-10,-1.2200325727462769e-07,1.4621764421463013e-07,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+0,2026-10-10 03:45:00,6.0,10.1875,10.125,10.1875,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+0,2026-10-10 03:46:00,6.0,6.0,5.71875,6.03125,False,0.0,False,0.0,False,0.0,False,0.0,False,0.0,False,0.0,0,False
+0,2026-10-10 03:47:00,6.0,1.0,1.0,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+0,2026-10-10 03:48:00,6.0,3.055902197957039e-10,-1.2200325727462769e-07,1.4621764421463013e-07,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+0,2026-10-10 03:49:00,6.0,3.055902197957039e-10,-1.2200325727462769e-07,1.4621764421463013e-07,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+0,2026-10-10 03:50:00,6.0,3.055902197957039e-10,-1.2200325727462769e-07,1.4621764421463013e-07,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,False,1.0,0,False
+0,2026-10-10 03:51:00,5.0,7.639755494892597e-11,-1.1222437024116516e-07,1.3224780559539795e-07,True,1.0,False,1.0,True,1.0,False,1.0,False,1.0,True,1.0,3,True

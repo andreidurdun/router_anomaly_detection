@@ -1,0 +1,2 @@
+case_id,region_rank,region_id,n_flows,service,devices,routers,first_seen,last_seen,verdict (normal | unusual-benign | suspicious | cannot-tell),reason,missing_information,reviewer,date
+case_01_R2,1,2,28,HTTP,9,7,2026-10-01 20:10:00,2026-10-18 20:14:00,,,,,

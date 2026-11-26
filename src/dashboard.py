@@ -155,13 +155,24 @@ def list_runs(runs_dir, skip=("_filter_cache",)):
                    if os.path.isdir(os.path.join(runs_dir, d)) and d not in skip], reverse=True)
 
 
-def pick_parquet(label, data_dir, preferred_path):
+def pick_parquet(label, data_dir, preferred_path, patterns=None):
     """Sidebar picker for a data parquet. Lists the real .parquet files in `data_dir` as a
     dropdown (so the right file is chosen, not typed), preselecting `preferred_path`'s basename.
-    If the folder has none, falls back to a free-text path. Returns an absolute path."""
+    `patterns` (e.g. ["oui_*.parquet"]) limits the dropdown to the files relevant for this page;
+    the preferred file is always kept, and if a filter would hide everything it falls back to
+    showing all parquets. If the folder has none, falls back to a free-text path. Returns an
+    absolute path."""
     pref = os.path.basename(preferred_path)
-    files = sorted(os.path.basename(f) for f in glob.glob(os.path.join(data_dir, "*.parquet"))) \
-        if os.path.isdir(data_dir) else []
+    files = []
+    if os.path.isdir(data_dir):
+        found = set()
+        for p in (patterns or ["*.parquet"]):
+            found.update(os.path.basename(f) for f in glob.glob(os.path.join(data_dir, p)))
+        if os.path.exists(os.path.join(data_dir, pref)):   # never hide the default file
+            found.add(pref)
+        if patterns and not found:                         # filter matched nothing → show all
+            found = {os.path.basename(f) for f in glob.glob(os.path.join(data_dir, "*.parquet"))}
+        files = sorted(found)
     if files:
         idx = files.index(pref) if pref in files else 0
         return os.path.join(data_dir, st.sidebar.selectbox(label, files, index=idx))
@@ -667,7 +678,7 @@ def page_oui_router():
     st.sidebar.header("Data sources")
     runs_dir = st.sidebar.text_input("Runs dir (results/oui_router)", DEF_OUI_RUNS)
     data_dir = st.sidebar.text_input("Data folder", DATA_DIR)
-    windows_path = pick_parquet("Windows parquet", data_dir, DEF_WINDOWS_PARQUET)
+    windows_path = pick_parquet("Windows parquet", data_dir, DEF_WINDOWS_PARQUET, patterns=["oui_*.parquet"])
     st.sidebar.caption("Per-window bin is read from each window's start/end — no bin assumption.")
     runs = list_runs(runs_dir)
     if not runs:
@@ -905,7 +916,8 @@ def page_flow_experiment(title, subtitle, default_runs, runs_label, score_col, s
     # flow-data parquet: default to the file matching THIS run's data shape (bin)
     bin_freq = str(cfg.get("bin", "1min"))
     data_dir = st.sidebar.text_input("Data folder", DATA_DIR)
-    flow_parquet = pick_parquet("Flow data parquet", data_dir, resolve_flow_parquet(cfg))
+    flow_parquet = pick_parquet("Flow data parquet", data_dir, resolve_flow_parquet(cfg),
+                                patterns=["new_data_aggregated_*.parquet"])
     src = "run_config.json (features_file)" if (cfg.get("features_file") or cfg.get("csv")) \
         else f"run_config.json (bin = {bin_freq})"
     st.sidebar.caption(f"Bin taken from {src}. The signal file must share that bin.")
@@ -1106,7 +1118,8 @@ def page_kl_split():
     st.sidebar.header("Data")
     runs_dir = st.sidebar.text_input("Runs dir (results/anomaly_kl_oui)", DEF_SPLIT_RUNS)
     data_dir = st.sidebar.text_input("Data folder", DATA_DIR)
-    flow_parquet = pick_parquet("Flow data parquet", data_dir, DEF_FLOW_PARQUET)
+    flow_parquet = pick_parquet("Flow data parquet", data_dir, DEF_FLOW_PARQUET,
+                                patterns=["new_data_aggregated_*.parquet"])
     runs = list_runs(runs_dir)
     if not runs:
         st.warning(f"No run folders under `{runs_dir}`."); return

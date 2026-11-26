@@ -1,0 +1,6 @@
+# Streamlit dashboard (oui_router_dashboard.py) — CPU only, no GPU needed.
+streamlit>=1.46          # st.context.theme.type is used; needs >= 1.46
+pandas>=2.0
+numpy>=1.24
+plotly>=5.20
+pyarrow>=14.0            # required by pandas.read_parquet

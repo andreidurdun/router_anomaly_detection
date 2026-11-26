@@ -156,9 +156,12 @@ def conn_folder(kind, key_vals, keys):
     return sanitize(name)
 
 
-def clean_series(g, channels):
-    """Sort, aggregate duplicate timestamps, resample to the inferred bin filling 0, force a
-    strictly uniform frequency. Returns a df with 'datetime','id' + channels (uniform grid)."""
+def clean_series(g, channels, fixed_freq=None):
+    """Sort, aggregate duplicate timestamps, resample to a bin filling 0, force a strictly uniform
+    frequency. Returns a df with 'datetime','id' + channels (uniform grid).
+    fixed_freq: resample ALL series to this one frequency (the run's global bin). Pass it so a sparse
+    series (e.g. traffic every other 5-min slot) is NOT coarsened to its own mode gap — that per-series
+    inference is what makes batched series disagree on frequency."""
     g = g.sort_values("datetime").copy()
     agg = {c: "sum" for c in channels}
     for c in ("mean_packet_size", "std_packet_size", "mean_iat", "mean_tcp_window",
@@ -172,9 +175,12 @@ def clean_series(g, channels):
     g = g.groupby("datetime").agg(agg).reset_index().sort_values("datetime")
     if len(g) < 2:
         return None
-    freq = g["datetime"].diff().mode()[0]
-    if freq < pd.Timedelta(seconds=1):
-        freq = pd.Timedelta(minutes=5)
+    if fixed_freq is not None and fixed_freq > pd.Timedelta(0):
+        freq = fixed_freq
+    else:
+        freq = g["datetime"].diff().mode()[0]
+        if freq < pd.Timedelta(seconds=1):
+            freq = pd.Timedelta(minutes=5)
     g = g.set_index("datetime").resample(freq).asfreq()
     g[channels] = g[channels].fillna(0.0)
     g = g.reset_index()
@@ -256,6 +262,51 @@ def forecast_series(pipeline, sdf, starts, c, h, channels, target, quantiles):
         lo = gg[lo_c].to_numpy() if lo_c else med
         hi = gg[hi_c].to_numpy() if hi_c else med
         out[int(str(wid)[1:])] = (med, lo, hi)
+    return out
+
+
+def forecast_batch(pipeline, tasks, h, channels, target, quantiles):
+    """ONE batched predict_df across MANY series/windows at once (keeps the GPU busy instead of
+    one call per series). tasks = [(key, sdf, start, c), ...] with key any hashable id.
+    Returns {key: (median[h], lower[h], upper[h])} for `target`. Contexts may differ in length."""
+    variate = [target] + [ch for ch in channels if ch != target]
+    # Chronos-2 requires every series in ONE predict_df call to share the same frequency; resampled
+    # series can still infer slightly different freq aliases, which raises "All time series must have
+    # the same frequency". So give each series a SYNTHETIC uniform datetime grid for the call only —
+    # the real timestamps are reattached by position in write_series_result (forecast uses relative
+    # spacing, not absolute dates), so results are unchanged.
+    STEP = pd.Timedelta(minutes=1)
+    BASE = pd.Timestamp("2000-01-01")
+    ctx_parts, fut_parts, idmap = [], [], {}
+    for j, (key, sdf, s, c) in enumerate(tasks):
+        wid = f"b{j}"
+        idmap[wid] = key
+        ctx = sdf.iloc[s - c:s][channels].copy().reset_index(drop=True)
+        ctx.insert(0, "datetime", BASE + STEP * np.arange(len(ctx)))
+        ctx["id"] = wid
+        ctx_parts.append(ctx)
+        fut = pd.DataFrame({"datetime": BASE + STEP * np.arange(len(ctx), len(ctx) + h), "id": wid})
+        fut_parts.append(fut)
+    big = pd.concat(ctx_parts, ignore_index=True)
+    bigfut = pd.concat(fut_parts, ignore_index=True)
+    try:
+        raw = pipeline.predict_df(big, future_df=bigfut, prediction_length=h,
+                                  quantile_levels=quantiles, id_column="id",
+                                  timestamp_column="datetime", target=variate)
+    except TypeError:
+        raw = pipeline.predict_df(big, prediction_length=h, quantile_levels=quantiles,
+                                  id_column="id", timestamp_column="datetime", target=variate)
+    sel = _select_target(raw, target)
+    med_c = _qcol(sel.columns, 0.5)
+    lo_c = _qcol(sel.columns, quantiles[0])
+    hi_c = _qcol(sel.columns, quantiles[-1])
+    out = {}
+    for wid, gg in sel.groupby("id"):
+        gg = gg.sort_values("datetime")
+        med = gg[med_c].to_numpy()
+        lo = gg[lo_c].to_numpy() if lo_c else med
+        hi = gg[hi_c].to_numpy() if hi_c else med
+        out[idmap[str(wid)]] = (med, lo, hi)
     return out
 
 
@@ -388,7 +439,13 @@ def main():
     ap.add_argument("--mode", required=True, choices=["flow", "oui-router"])
     ap.add_argument("--context", type=int, default=128, help="context length; rounded to a multiple of 16")
     ap.add_argument("--horizon", type=int, default=12, help="forecast horizon = evaluation window per step")
-    ap.add_argument("--step", type=int, default=0, help="slide step (default = horizon, non-overlapping)")
+    ap.add_argument("--step", type=int, default=0, help="slide step (default = horizon, non-overlapping horizons)")
+    ap.add_argument("--windowing", choices=["causal", "chunks", "full"], default="causal",
+                    help="causal = sliding context (step defaults to horizon, contexts overlap). "
+                         "chunks = cut the series into disjoint windows of length context+horizon and "
+                         "forecast the horizon tail of each (no sliding); forces step = context+horizon. "
+                         "full = ONE window per series: context = whole series minus horizon, forecast the "
+                         "last --horizon bins (context length varies per series; --context is ignored).")
     ap.add_argument("--methods", default="0,1,2,3,4,5",
                     help="which anomaly methods to run (0=bounds, 1=Z, 2=norm-dist, 3=MAE, 4=MAPE, 5=ensemble 0+2)")
     ap.add_argument("--target", default="packet_count", help="channel to forecast/evaluate (must be among the channels)")
@@ -417,6 +474,10 @@ def main():
     ap.add_argument("--min-bins", type=int, default=0, help="extra length floor; must be >= context+horizon (auto)")
     ap.add_argument("--limit", type=int, default=0, help="cap number of series (0 = all), ranked by total target")
     ap.add_argument("--max-windows", type=int, default=0, help="cap windows per series (0 = all)")
+    ap.add_argument("--batch", type=int, default=16,
+                    help="windows forecast together in ONE predict_df call, batched across series "
+                         "(bigger = faster but more GPU memory; lower it if you hit OOM, esp. for "
+                         "--windowing full with very long contexts)")
     ap.add_argument("--out-dir", default=DEFAULT_OUT)
     ap.add_argument("--tag", default="",
                     help="representation subfolder under out-dir (default: <mode>_<datafile>_C<C>_H<H>). "
@@ -428,10 +489,20 @@ def main():
         raise SystemExit(f"--data not found: {args.data}")
     C = round_mult16(args.context)
     H = args.horizon
-    S = args.step if args.step > 0 else H
-    if C != args.context:
+    if args.windowing == "chunks":
+        S = C + H                       # disjoint windows: each = long context + tail horizon, no sliding
+        if args.step > 0 and args.step != S:
+            print(f"--windowing chunks overrides --step {args.step} -> {S} (context+horizon, non-overlapping)")
+    elif args.windowing == "full":
+        S = 0                           # one window per series; context = len(series) - H (set per series)
+    else:
+        S = args.step if args.step > 0 else H
+    if C != args.context and args.windowing != "full":
         print(f"context {args.context} -> {C} (multiple of 16)")
-    min_len = max(C + H, args.min_bins)
+    if args.windowing == "full":
+        min_len = max(args.min_bins, H + 16)   # need the horizon + at least one patch of context
+    else:
+        min_len = max(C + H, args.min_bins)
     methods = [int(m) for m in str(args.methods).split(",") if m.strip() != ""]
     # Chronos-2 is trained on q0.01..q0.99 -> clamp the tails to that range
     lo_q = max(0.01, round((1.0 - args.interval) / 2.0, 5))
@@ -443,7 +514,11 @@ def main():
     print(f"interval = q{lo_q}..q{hi_q} ({eff} central){note} | max_anomaly_frac={args.max_anomaly_frac} "
           f"| thresholds {th}")
     data_stem = os.path.splitext(os.path.basename(args.data))[0]
-    tag = args.tag or f"{args.mode}_{data_stem}_C{C}_H{H}"
+    if args.windowing == "full":
+        tag = args.tag or f"{args.mode}_{data_stem}_full_H{H}"   # context varies per series, so no C in tag
+    else:
+        win_tag = "" if args.windowing == "causal" else f"_{args.windowing}"
+        tag = args.tag or f"{args.mode}_{data_stem}{win_tag}_C{C}_H{H}"
     out_base = os.path.join(args.out_dir, tag)
     print(f"representation tag: {tag}  ->  {out_base}")
 
@@ -495,8 +570,9 @@ def main():
     if "datetime" not in df.columns:
         raise SystemExit("input has no 'datetime' column.")
     df["datetime"] = pd.to_datetime(df["datetime"])
-    print(f"[{args.mode}] group by {keys} | channels={channels} | C={C} H={H} step={S} "
-          f"| methods={methods} | min_len={min_len}")
+    cdesc = "full(series-H)" if args.windowing == "full" else str(C)
+    print(f"[{args.mode}] group by {keys} | channels={channels} | windowing={args.windowing} "
+          f"| C={cdesc} H={H} step={S} | methods={methods} | min_len={min_len}")
 
     # ---- fast, vectorized candidate scan: NO per-series resample, groups not materialized ----
     gb = df.groupby(keys, sort=False)
@@ -521,8 +597,14 @@ def main():
         for key in qual.index:
             kv = key if isinstance(key, tuple) else (key,)
             sb = int(qual.loc[key, "span_bins"])
-            nwin = len(build_windows(sb, C, H, S))
-            print(f"  {conn_folder(kind, kv, keys)}: ~{sb} bins, ~{nwin} windows, vol={float(qual.loc[key, 'vol']):.0f}")
+            if args.windowing == "full":
+                nwin = 1 if (sb - H) >= 1 else 0
+                cinfo = f"C~{sb - H}(full)"
+            else:
+                nwin = len(build_windows(sb, C, H, S))
+                cinfo = f"C={C}"
+            print(f"  {conn_folder(kind, kv, keys)}: ~{sb} bins, {cinfo}, ~{nwin} windows, "
+                  f"vol={float(qual.loc[key, 'vol']):.0f}")
         print("(dry-run: model not loaded)")
         return
 
@@ -530,26 +612,12 @@ def main():
     pipeline = load_pipeline(args.model, args.device)
 
     summary = []
-    for ci, key in enumerate(qual.index):
-        kv = key if isinstance(key, tuple) else (key,)
-        folder = conn_folder(kind, kv, keys)
-        sdf = clean_series(gb.get_group(_gkey(key)), channels)
-        if sdf is None:
-            continue
-        starts = build_windows(len(sdf), C, H, S)
-        if args.max_windows and args.max_windows > 0:
-            starts = starts[: args.max_windows]
-        if not starts:
-            continue
-        print(f"[{ci+1}/{len(qual)}] {folder}: {len(sdf)} bins, {len(starts)} windows")
+    import json
+    import time
 
-        try:
-            fc = forecast_series(pipeline, sdf, starts, C, H, channels, args.target, quantiles)
-        except Exception as e:
-            print(f"   forecast failed: {e}")
-            continue
-
-        # assemble the per-series stream in time order
+    def write_series_result(folder, sdf, starts, C_eff, fc):
+        """Assemble the per-series stream from forecast results, run the methods, write outputs.
+        Returns the summary row (or None if nothing to write)."""
         recs = []
         for i, s in enumerate(starts):
             if i not in fc:
@@ -560,7 +628,7 @@ def main():
                 recs.append((i, sdf["datetime"].iloc[row_idx], float(sdf[args.target].iloc[row_idx]),
                              float(med[k]), float(lo[k]), float(up[k])))
         if not recs:
-            continue
+            return None
         stream = pd.DataFrame(recs, columns=["window", "datetime", "truth", "pred", "lower", "upper"])
         stream = stream.drop_duplicates("datetime").sort_values("datetime").reset_index(drop=True)
 
@@ -581,9 +649,9 @@ def main():
             stream[f"is_anom_m{m}"] = is_anom
             stream[f"score_m{m}"] = score
             counts[m] = int(is_anom.sum())
-            png = os.path.join(out_feat, f"sliding_C{C}_H{H}_method{m}.png")
+            png = os.path.join(out_feat, f"sliding_C{C_eff}_H{H}_method{m}.png")
             plot_method(sdf, args.target, stream, m, is_anom, score, png,
-                        f"{folder} | {args.target} | sliding C={C} H={H} | method {m} "
+                        f"{folder} | {args.target} | {args.windowing} C={C_eff} H={H} | method {m} "
                         f"({counts[m]} anomalies)")
         # consensus: a point is an anomaly only if at least --consensus methods agree
         cons_thr = 0
@@ -594,10 +662,10 @@ def main():
             stream["votes"] = votes
             stream["is_anom_consensus"] = cons
             counts["consensus"] = int(cons.sum())
-            png = os.path.join(out_feat, f"sliding_C{C}_H{H}_consensus_min{cons_thr}.png")
+            png = os.path.join(out_feat, f"sliding_C{C_eff}_H{H}_consensus_min{cons_thr}.png")
             plot_method(sdf, args.target, stream, "consensus", cons.to_numpy(),
                         stream[f"score_m{methods[0]}"].to_numpy(), png,
-                        f"{folder} | {args.target} | sliding C={C} H={H} | "
+                        f"{folder} | {args.target} | {args.windowing} C={C_eff} H={H} | "
                         f"consensus (>= {cons_thr} of {len(methods)} methods): {counts['consensus']} anomalies")
 
         stream.to_csv(os.path.join(out_feat, "sliding_scores.csv"), index=False)
@@ -606,20 +674,82 @@ def main():
         series_out = sdf[["datetime"] + channels].copy()
         series_out["actual"] = sdf[args.target].values      # backward-compat alias for the target channel
         series_out.to_csv(os.path.join(out_feat, "sliding_series.csv"), index=False)
-        import json
-        json.dump({"context": int(C), "horizon": int(H), "step": int(S), "interval": float(eff),
-                   "target": args.target, "channels": list(channels),
+        json.dump({"context": int(C_eff), "horizon": int(H), "step": int(S), "interval": float(eff),
+                   "target": args.target, "channels": list(channels), "windowing": args.windowing,
                    "starts": [int(s) for s in starts], "n": int(len(sdf)),
                    "mode": args.mode, "tag": tag, "data": os.path.basename(args.data)},
                   open(os.path.join(out_feat, "sliding_meta.json"), "w"))
-        msg = "   anomalies per method: " + ", ".join(f"m{m}={counts[m]}" for m in methods)
+        msg = f"   {folder}: " + ", ".join(f"m{m}={counts[m]}" for m in methods)
         if cons_thr:
             msg += f"  | consensus(>={cons_thr})={counts['consensus']}"
         print(msg)
-        summary.append(dict(connection=folder, target=args.target, n_bins=len(sdf),
-                            n_windows=len(starts), n_eval=len(stream),
-                            **{f"anom_m{m}": counts[m] for m in methods},
-                            **({f"anom_consensus_min{cons_thr}": counts["consensus"]} if cons_thr else {})))
+        return dict(connection=folder, target=args.target, n_bins=len(sdf),
+                    n_windows=len(starts), n_eval=len(stream),
+                    **{f"anom_m{m}": counts[m] for m in methods},
+                    **({f"anom_consensus_min{cons_thr}": counts["consensus"]} if cons_thr else {}))
+
+    def build_spec(key):
+        kv = key if isinstance(key, tuple) else (key,)
+        folder = conn_folder(kind, kv, keys)
+        sdf = clean_series(gb.get_group(_gkey(key)), channels, fixed_freq=freq)
+        if sdf is None:
+            return None
+        if args.windowing == "full":
+            c_eff = len(sdf) - H                       # context = whole series minus the horizon
+            starts = [c_eff] if c_eff >= 1 else []
+        else:
+            c_eff = C
+            starts = build_windows(len(sdf), C, H, S)
+        if args.max_windows and args.max_windows > 0:
+            starts = starts[: args.max_windows]
+        if not starts:
+            return None
+        return dict(folder=folder, sdf=sdf, starts=starts, c_eff=c_eff)
+
+    batch_n = max(1, args.batch)
+    group, group_windows, done = [], 0, 0
+
+    def flush_group():
+        nonlocal group, group_windows
+        if not group:
+            return
+        tasks = []
+        for gi, g in enumerate(group):
+            for wi, s in enumerate(g["starts"]):
+                tasks.append(((gi, wi), g["sdf"], s, g["c_eff"]))
+        ctx_bins = sum(g["c_eff"] * len(g["starts"]) for g in group)
+        print(f"  >>> BATCH: ONE predict_df for {len(group)} series / {len(tasks)} windows "
+              f"({ctx_bins} context bins total) ...", flush=True)
+        t0 = time.time()
+        try:
+            results = forecast_batch(pipeline, tasks, H, channels, args.target, quantiles)
+        except Exception as e:
+            print(f"   batch forecast failed ({len(group)} series, {len(tasks)} windows): {e}")
+            results = {}
+        dt = time.time() - t0
+        print(f"  >>> BATCH done in {dt:.2f}s = {1000*dt/max(1,len(tasks)):.0f} ms/window "
+              f"(vs one call per series); {len(results)} series returned", flush=True)
+        for gi, g in enumerate(group):
+            fc = {wi: results[(gi, wi)] for wi in range(len(g["starts"])) if (gi, wi) in results}
+            if not fc:
+                continue
+            row = write_series_result(g["folder"], g["sdf"], g["starts"], g["c_eff"], fc)
+            if row:
+                summary.append(row)
+        group, group_windows = [], 0
+
+    for key in qual.index:
+        spec = build_spec(key)
+        if spec is None:
+            continue
+        done += 1
+        print(f"[{done}/{len(qual)}] queued {spec['folder']}: {len(spec['sdf'])} bins, "
+              f"C={spec['c_eff']}, {len(spec['starts'])} windows")
+        group.append(spec)
+        group_windows += len(spec["starts"])
+        if group_windows >= batch_n:                 # keep whole series together; flush when budget reached
+            flush_group()
+    flush_group()
 
     if summary:
         os.makedirs(out_base, exist_ok=True)

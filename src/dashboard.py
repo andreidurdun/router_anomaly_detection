@@ -527,6 +527,7 @@ def win_plot_fullres(rec, ss, channels, col_w=1400, row_h=200):
     kl = np.array([bool(sidx["kl_anom"].get(w, False)) if "kl_anom" in sidx else False for w in wids])
     fig = make_subplots(rows=C, cols=1, shared_xaxes=True, subplot_titles=channels, vertical_spacing=0.07)
     done = {"kde": False, "kl": False, "both": False}
+    shapes = []   # collected and added once: add_vrect in a loop copies all shapes each call (O(n^2))
 
     def cat(j):
         if kde[j] and kl[j]:
@@ -551,11 +552,14 @@ def win_plot_fullres(rec, ss, channels, col_w=1400, row_h=200):
             if not arr.size or not (kde[j] or kl[j]):
                 continue
             tt = tts[j]; key, line, band, name = cat(j)
-            fig.add_vrect(x0=tt[0], x1=tt[-1], fillcolor=band, line_width=0, layer="below", row=ci + 1, col=1)
+            ax = "" if ci == 0 else str(ci + 1)
+            shapes.append(dict(type="rect", xref="x" + ax, yref="y" + ax + " domain", x0=tt[0], x1=tt[-1],
+                               y0=0, y1=1, fillcolor=band, line_width=0, layer="below"))
             fig.add_trace(go.Scatter(x=tt, y=arr, mode="lines", line=dict(color=line, width=1.8), name=name,
                                      legendgroup=key, showlegend=not done[key],
                                      hovertemplate=name + " window<br>%{x|%m-%d %H:%M}<br>%{y:.4g}<extra></extra>"), row=ci + 1, col=1)
             done[key] = True
+    fig.update_layout(shapes=shapes)
     fig.update_xaxes(showgrid=True, gridcolor=TH["grid"], linecolor=TH["grid"], tickfont=dict(size=8, color=TH["fg"]))
     fig.update_yaxes(showgrid=True, gridcolor=TH["grid"], linecolor=TH["grid"], tickfont=dict(size=8, color=TH["fg"]), zeroline=False)
     fig.update_annotations(font=dict(size=11, color=TH["fg"]))
